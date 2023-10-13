@@ -1,0 +1,25 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate a sample 2D image
+x = np.linspace(-5, 5, 400)
+y = np.linspace(-5, 5, 400)
+X, Y = np.meshgrid(x, y)
+image = np.sin(np.sqrt(X**2 + Y**2))
+
+# Perform 2D FFT
+fft_result = np.fft.fft2(image)
+fft_result = np.fft.fftshift(fft_result)
+frequency_x = np.fft.fftfreq(image.shape[0])
+frequency_y = np.fft.fftfreq(image.shape[1])
+
+# Plot the 2D FFT result
+plt.figure(figsize=(12, 6))
+plt.subplot(2, 1, 1)
+plt.imshow(image, cmap='gray')
+plt.title('Original 2D Image')
+plt.subplot(2, 1, 2)
+plt.imshow(np.abs(fft_result), cmap='gray', extent=(frequency_x.min(), frequency_x.max(), frequency_y.min(), frequency_y.max()))
+plt.title('2D FFT Result')
+plt.show()
+
