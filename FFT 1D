@@ -1,0 +1,22 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate a sample signal
+A = 1.0
+T = 2.0 * np.pi
+t = np.linspace(-5 * T, 5 * T, 400)
+signal = np.sin(2 * np.pi * t / T) + 0.5 * np.sin(6 * np.pi * t / T)
+
+# Perform FFT
+fft_result = np.fft.fft(signal)
+frequency = np.fft.fftfreq(len(t), t[1] - t[0])
+
+# Plot the FFT result
+plt.figure(figsize=(12, 6))
+plt.subplot(2, 1, 1)
+plt.plot(t, signal)
+plt.title('Original Signal')
+plt.subplot(2, 1, 2)
+plt.plot(frequency, np.abs(fft_result))
+plt.title('FFT Result')
+plt.show()
