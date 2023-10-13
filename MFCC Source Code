@@ -1,0 +1,66 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fftpack import dct
+
+# Generate a synthetic audio signal
+sample_rate = 44100  # 44.1 kHz sample rate
+duration = 3  # 3 seconds
+t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+frequency = 440.0  # Frequency of the tone (e.g., A4)
+audio_signal = 0.5 * np.sin(2 * np.pi * frequency * t)
+
+# Plot the synthetic audio signal
+plt.figure(figsize=(10, 4))
+plt.plot(t, audio_signal)
+plt.title('Synthetic Audio Signal')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.grid()
+plt.show()
+
+# Compute MFCCs
+window_size = int(sample_rate * 0.025)  # 25 ms window
+hop_size = int(sample_rate * 0.010)  # 10 ms hop size
+n_mfcc = 13  # Number of MFCC coefficients
+n_fft = 512  # FFT size
+num_filters = 26  # Number of Mel filters
+eps = 1e-6  # Small constant to prevent division by zero
+
+# Calculate MFCCs using a Hamming window
+mfccs = []
+for i in range(0, len(audio_signal) - window_size, hop_size):
+    frame = audio_signal[i:i + window_size]
+    hamming_window = np.hamming(window_size)
+    frame *= hamming_window
+    spectrum = np.abs(np.fft.rfft(frame, n_fft))
+    
+    # Calculate Mel filter bank manually
+    mel_filter_bank = np.zeros((num_filters, n_fft // 2 + 1))
+    for j in range(1, num_filters + 1):
+        f_min = 0  # Minimum frequency (Hz)
+        f_max = sample_rate / 2  # Maximum frequency (Hz)
+        mel_min = 1127 * np.log(1 + f_min / 700)
+        mel_max = 1127 * np.log(1 + f_max / 700)
+        mel_center = mel_min + (mel_max - mel_min) * j / (num_filters + 1)
+        f_center = 700 * (np.exp(mel_center / 1127) - 1)
+        mel_filter_bank[j - 1, :] = (
+            (spectrum >= f_center) & (spectrum <= f_center + eps)).astype(float)
+    
+    mel_energies = np.dot(mel_filter_bank, spectrum)
+    log_mel_energies = np.log(mel_energies + eps)
+    dct_coefficients = dct(log_mel_energies, type=2, axis=-1, norm='ortho')
+    mfccs.append(dct_coefficients)
+
+mfccs = np.array(mfccs)
+
+# Plot the MFCCs
+plt.figure(figsize=(10, 4))
+plt.imshow(mfccs.T, origin='lower', cmap='viridis', aspect='auto')
+plt.title('MFCCs')
+plt.xlabel('Frame')
+plt.ylabel('MFCC Coefficient')
+plt.colorbar(format="%+2.0f dB")
+plt.show()
+
+# Save the MFCCs to a text file (if needed)
+np.savetxt("mfccs.txt", mfccs)
